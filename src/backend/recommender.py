@@ -7,6 +7,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
+import shutil
 
 # Internal imports
 # Assumes running from project root
@@ -39,15 +40,57 @@ class RecommenderSystem:
         
         print("Loading Vectors and Dataframes...")
         # Movies
-        self.db_movies = Chroma(persist_directory="movies_chroma_db", embedding_function=self.embedding_fn)
         self.movies_df = pd.read_csv("movies_with_emotion.csv")
         self._preprocess_movies()
+        self.db_movies = self._get_or_create_vector_db(
+            name="movies",
+            persist_dir="movies_chroma_db",
+            df=self.movies_df,
+            text_col="combined_text",
+            title_col="Title"
+        )
         
         # Books
-        self.db_books = Chroma(persist_directory="books_chroma_db", embedding_function=self.embedding_fn)
         self.books_df = pd.read_csv("goodbooks_with_emotion.csv")
         self._preprocess_books()
+        self.db_books = self._get_or_create_vector_db(
+            name="books",
+            persist_dir="books_chroma_db",
+            df=self.books_df,
+            text_col="tagged_discription",
+            title_col="title"
+        )
         print("Initialization Complete.")
+
+    def _get_or_create_vector_db(self, name, persist_dir, df, text_col, title_col):
+        if os.path.exists(persist_dir):
+            try:
+                # Attempt to load existing DB
+                db = Chroma(persist_directory=persist_dir, embedding_function=self.embedding_fn)
+                # Simple check to see if it works (checking internal collection count or similar might be better, but this implies load success)
+                # Note: Chroma() lazy loads, so we might need a real call to trigger error if file is bad
+                # But for LFS pointers, usually the __init__ or first call fails. 
+                # Let's try to get the collection object which usually triggers a DB read
+                if db._client.list_collections():
+                     print(f"Loaded existing {name} DB.")
+                     return db
+            except Exception as e:
+                print(f"Error loading {name} DB (likely LFS pointer or corruption): {e}")
+                print(f"Removing corrupted {persist_dir} and regenerating...")
+                shutil.rmtree(persist_dir)
+        
+        print(f"Regenerating {name} DB from CSV... This may take a minute.")
+        texts = df[text_col].fillna("").astype(str).tolist()
+        metadatas = [{"title": str(t)} for t in df[title_col].tolist()]
+        
+        db = Chroma.from_texts(
+            texts=texts,
+            embedding=self.embedding_fn,
+            metadatas=metadatas,
+            persist_directory=persist_dir
+        )
+        print(f"Successfully generated {name} DB.")
+        return db
 
     def _preprocess_movies(self):
         self.movies_df["large_thumbnail"] = self.movies_df["movie_cover"].str.replace("SX300", "SX600")
@@ -140,7 +183,9 @@ class RecommenderSystem:
         
         found_titles = []
         for rec in recs:
-            t = self._extract_title(rec.page_content)
+            t = rec.metadata.get("title")
+            if not t:
+                t = self._extract_title(rec.page_content)
             if t: found_titles.append(t)
             
         # 3. Filter DataFrame
