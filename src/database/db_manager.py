@@ -20,6 +20,47 @@ class DatabaseManager:
         conn = self._get_conn()
         cursor = conn.cursor()
         
+        # 1. Create Users Table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                email TEXT,
+                full_name TEXT,
+                profile_image TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 2. Create Interaction Logs Table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS interaction_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                query_text TEXT,
+                tone TEXT,
+                media_type TEXT,
+                agent_response TEXT,
+                recommendations TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+        
+        # 3. Create User Profile Table (Preferences)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_profile (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                preference_type TEXT,
+                item_value TEXT,
+                category TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+        
         # Check if users table has email and full_name
         cursor.execute("PRAGMA table_info(users)")
         columns = [info[1] for info in cursor.fetchall()]
