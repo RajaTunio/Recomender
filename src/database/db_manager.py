@@ -11,6 +11,8 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__)
 class DatabaseManager:
     def __init__(self, db_path=DB_PATH):
         self.db_path = db_path
+        # Ensure database directory exists
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._ensure_schema()
 
     def _ensure_schema(self):
