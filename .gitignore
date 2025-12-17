@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+.venv/
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Logs
+*.log
+
+# Project Specific
+unused/
+unused_items/
+project.db
+
+# Vector DB (Too large for standard Git, regenerating is better or LFS)
+movies_chroma_db/
+books_chroma_db/
+mini-lm-l6-v2-local/
+
+# VS Code
+.vscode/
