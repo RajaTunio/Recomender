@@ -28,7 +28,7 @@ class RecommenderSystem:
         self.db = DatabaseManager()
         
         # Paths (Relative to project root)
-        self.model_path = "mini-lm-l6-v2-local"
+        self.model_path = "sentence-transformers/all-MiniLM-L6-v2"
         
         print("Loading Embedding Model...")
         self.embedding_fn = HuggingFaceEmbeddings(
