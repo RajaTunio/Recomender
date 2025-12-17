@@ -187,9 +187,9 @@ class RecommenderSystem:
         # 4. Tone Sort
         if user_query.tone != ToneEnum.all:
             tone_map = {
-                ToneEnum.happy: "joy", ToneEnum.surprising: "surprise",
-                ToneEnum.angry: "anger", ToneEnum.suspenseful: "fear",
-                ToneEnum.sad: "sadness"
+                ToneEnum.joy: "joy", ToneEnum.surprise: "surprise",
+                ToneEnum.anger: "anger", ToneEnum.fear: "fear",
+                ToneEnum.sadness: "sadness"
             }
             if col := tone_map.get(user_query.tone):
                 if col in matched_df.columns:

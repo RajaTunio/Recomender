@@ -3,11 +3,11 @@ from typing import List, Optional
 from enum import Enum
 
 class ToneEnum(str, Enum):
-    happy = "Happy"
-    surprising = "Surprising"
-    angry = "Angry"
-    suspenseful = "Suspenseful"
-    sad = "Sad"
+    joy = "Joy"
+    surprise = "Surprise"
+    anger = "Anger"
+    fear = "Fear"
+    sadness = "Sadness"
     all = "All"
 
 class MediaType(str, Enum):

@@ -86,24 +86,33 @@ async def login(req: LoginRequest):
 
 @app.post("/chat", response_model=AgentResponse)
 async def chat(query: UserQuery):
+    print(f"DEBUG: Received Chat Request: {query}")
     if not recommender:
+        print("DEBUG: Recommender not initialized")
         raise HTTPException(status_code=503, detail="System initializing...")
     
-    # 1. Get Recommendations
-    response = recommender.get_recommendations(query)
-    
-    # 2. Log Interaction (if logged in)
-    if query.user_id:
-        db.log_interaction(
-            user_id=query.user_id,
-            query_text=query.query_text,
-            tone=query.tone.value,
-            media_type=query.media_type.value,
-            agent_response=response.agent_message,
-            recommendations=[r.dict() for r in response.recommendations]
-        )
-    
-    return response
+    try:
+        # 1. Get Recommendations
+        response = recommender.get_recommendations(query)
+        print(f"DEBUG: Recommendation Count: {len(response.recommendations)}")
+        
+        # 2. Log Interaction (if logged in)
+        if query.user_id:
+            db.log_interaction(
+                user_id=query.user_id,
+                query_text=query.query_text,
+                tone=query.tone.value,
+                media_type=query.media_type.value,
+                agent_response=response.agent_message,
+                recommendations=[r.dict() for r in response.recommendations]
+            )
+        
+        return response
+    except Exception as e:
+        print(f"DEBUG: Error in chat endpoint: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/profile/{user_id}")
 async def get_profile(user_id: int):
